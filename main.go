@@ -300,20 +300,20 @@ func initDB() {
 	db.Exec("SET time_zone = '+07:00'")
 
 	createUsers := `
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    fullname TEXT,
-    alamat TEXT,
-    phone TEXT,
-    email TEXT UNIQUE,
-    username TEXT,
-    password TEXT,
-    profile_picture LONGTEXT, -- atau BLOB jika mau binary
-    role TEXT,
-    otp_code TEXT,
-    otp_expires DATETIME,
-    verified TINYINT(1) DEFAULT 0
-);`
+	CREATE TABLE IF NOT EXISTS users (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		fullname VARCHAR(255),       -- Ubah jadi VARCHAR biar rapi (opsional)
+		alamat TEXT,
+		phone VARCHAR(20),           -- Ubah jadi VARCHAR (opsional)
+		email VARCHAR(255) UNIQUE,   -- WAJIB DIUBAH DARI TEXT KE VARCHAR(255)
+		username VARCHAR(255),       -- SEBAIKNYA DIUBAH JUGA
+		password TEXT,
+		profile_picture LONGTEXT,
+		role VARCHAR(50),
+		otp_code VARCHAR(10),
+		otp_expires DATETIME,
+		verified TINYINT(1) DEFAULT 0
+	);`
 
 	// auto create table books
 	createBooks := `
