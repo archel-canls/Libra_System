@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Akun | Libra (Library Area)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css"> 
+    <link rel="stylesheet" href="../css/auth.css"> <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 'primary': '#4f46e5', 'secondary': '#10b981' }
+                }
+            }
+        }
+        
+    </script>
+
+    
+</head>
+<body id="daftar-page" class="auth-container">
+    <div class="auth-card">
+        <h2>Daftar Akun Baru</h2>
+        
+        <div id="step1">
+            <h3 class="text-lg font-semibold mb-3 text-center">Langkah 1: Data Diri & Foto Profil</h3>
+            <form method="POST" action="/register">
+                <div class="profile-upload-area">
+                    <img id="foto-preview" src="img/default_user.png" alt="Foto Profil" class="profile-preview">
+                    <input type="file" id="foto-upload" accept="image/*" class="p-2 border rounded-lg w-full max-w-[200px]" required>
+                    <input type="hidden" id="profile_picture_data" name="profile_picture_data">
+                </div>
+                
+                <input type="text" id="nama" name="nama" placeholder="Nama Lengkap" required>
+                <textarea id="alamat" name="alamat" placeholder="Alamat Lengkap" rows="2" required></textarea>
+                <input type="tel" id="nohp" name="nohp" placeholder="Nomor Handphone (08...)" required>
+                <input type="email" id="email" name="email" placeholder="Email" required>
+                
+        <button type="button" class="auth-btn-primary" onclick="lanjutKeStep2()">
+            Lanjut ke Langkah 2
+        </button>
+
+            </form>
+        </div>
+
+        <div id="step2" style="display: none;">
+            <h3 class="text-lg font-semibold mb-3 text-center">Langkah 2: Akun Login</h3>
+            
+<div id="register-error" class="text-red-600 text-sm mb-4 text-center">
+    {{.Error}}
+</div>
+
+
+
+            <form id="form-step2" method="POST" action="/register">
+                <input type="hidden" id="hidden-nama" name="nama">
+                <input type="hidden" id="hidden-alamat" name="alamat">
+                <input type="hidden" id="hidden-nohp" name="nohp">
+                <input type="hidden" id="hidden-email" name="email">
+                <input type="hidden" id="hidden-profile-picture" name="profile_picture_data">
+
+                <input type="text" id="username_reg" name="username" placeholder="Username (Untuk Login)" required>
+                <input type="password" id="password_reg" name="password" placeholder="Password" required>
+                <input type="password" id="confirm_password" name="confirm_password" placeholder="Konfirmasi Password" required>
+
+                
+                <button type="submit" class="auth-btn-primary">
+                    Selesaikan Pendaftaran
+                </button>
+            </form>
+            <div class="auth-link-text">
+                <a href="#" onclick="document.getElementById('step1').style.display='block'; document.getElementById('step2').style.display='none'; return false;">
+                    &larr; Kembali
+                </a>
+            </div>
+        </div>
+        
+        <div class="auth-link-text mt-5">
+            Sudah punya akun? <a href="/login">Login</a>
+        </div>
+    </div>
+<script src="/js/register.js"></script>
+
+</body>
+</html>

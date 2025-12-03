@@ -1,0 +1,100 @@
+/* Mengatur container utama di halaman login, daftar, dll. */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    background-color: #f3f4f6; 
+}
+
+/* Mengatur card/box formulir */
+.auth-card {
+    background-color: #ffffff;
+    padding: 2.5rem; /* p-10 */
+    border-radius: 1rem; /* rounded-xl */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-2xl */
+    width: 100%;
+    max-width: 448px; /* max-w-md */
+}
+
+/* Styling untuk judul (h2) */
+.auth-card h2 {
+    font-size: 1.875rem; /* text-3xl */
+    font-weight: 700; /* font-bold */
+    color: #1f2937; /* text-gray-800 */
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+/* Styling untuk input dan tombol utama */
+.auth-card input[type="text"],
+.auth-card input[type="password"],
+.auth-card input[type="email"],
+.auth-card input[type="tel"],
+.auth-card textarea {
+    width: 100%;
+    padding: 0.75rem; /* p-3 */
+    border: 1px solid #d1d5db; /* border-gray-300 */
+    border-radius: 0.5rem; /* rounded-lg */
+    margin-bottom: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.auth-card input:focus,
+.auth-card textarea:focus {
+    border-color: #4f46e5; /* primary-color */
+    box-shadow: 0 0 0 1px #4f46e5;
+    outline: none;
+}
+
+.auth-btn-primary {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    margin-top: 1.5rem;
+    background-color: #4f46e5; /* primary-color */
+    color: white;
+    font-weight: 600; /* font-semibold */
+    border-radius: 0.5rem;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.auth-btn-primary:hover {
+    background-color: #4338ca; /* primary-color darker */
+}
+
+/* Link kecil di bawah form */
+.auth-link-text {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.875rem; /* text-sm */
+    color: #6b7280; /* text-gray-500 */
+}
+
+.auth-link-text a {
+    color: #4f46e5;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-link-text a:hover {
+    text-decoration: underline;
+}
+
+/* Khusus Pendaftaran Step 1 (Foto Profil) */
+.profile-upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.profile-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #d1d5db;
+    margin-bottom: 0.5rem;
+}

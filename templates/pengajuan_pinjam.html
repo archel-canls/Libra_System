@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beranda Admin | Libra</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+    /* --- Form Tambah Buku --- */
+    #add-book-bar-container {
+        transition: all 0.5s ease;
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+    }
+    #add-book-bar-container.show {
+        max-height: 1500px;
+        opacity: 1;
+        margin-bottom: 20px;
+    }
+
+    /* --- Modal Genre --- */
+    .custom-genre-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        background-color: rgba(0,0,0,0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 50;
+    }
+    .custom-genre-modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+    }
+
+    /* --- Filter Dropdown --- */
+    #filter-dropdown {
+        position: absolute;
+        left: 0;
+        margin-top: 0.25rem;
+        width: 12rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(95%);
+        transition: all 0.2s ease-in-out;
+        z-index: 20;
+    }
+    #filter-dropdown.show {
+        opacity: 1;
+        visibility: visible;
+        transform: scale(100%);
+    }
+    #filter-dropdown a {
+        display: block;
+        padding: 0.5rem 1rem;
+        color: #374151;
+        text-decoration: none;
+        border-radius: 0.375rem;
+    }
+    #filter-dropdown a:hover {
+        background: #e0e7ff;
+        color: #1d4ed8;
+    }
+
+#filter-dropdown {
+    display: none; /* default hidden */
+}
+
+#filter-dropdown.show {
+    display: block; /* tampilkan saat toggle */
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 20px;
+    text-align: center;
+    min-width: 80px; /* minimal lebar, bisa diubah */
+    max-width: 150px; /* maksimal lebar */
+    word-wrap: break-word;
+    overflow: hidden;
+}
+
+
+    
+</style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+<!-- Header -->
+<header class="bg-indigo-600 text-white flex items-center justify-between p-4 shadow-lg">
+    <div class="text-xl font-bold">Libra-Member</div>
+    <nav class="space-x-4 hidden md:flex">
+        <a href="/member" class="block px-6 py-2 rounded hover:bg-indigo-500">Beranda</a>
+        <a href="/pengajuan_pinjam" class="block px-6 py-2 rounded hover:bg-indigo-500">Pinjaman Buku</a>
+        <a href="/ebook" class="block px-6 py-2 rounded hover:bg-indigo-500">Ebook</a>
+        <a href="/bookmarkpage" class="block px-6 py-2 rounded hover:bg-indigo-500">BOOKMARK</a>
+        <a href="/feedback" class="block px-6 py-2 rounded hover:bg-indigo-500">Kritik & Saran</a>
+    </nav>
+    <div class="relative">
+        <img src="{{if .User.ProfilePicture}}{{.User.ProfilePicture}}{{else}}/img/default_user.png{{end}}" 
+        alt="Profil"
+        class="w-10 h-10 rounded-full cursor-pointer object-cover border-2 border-white"
+        id="profile-btn">
+    </div>
+</header>
+
+<main class="container mx-auto px-4 py-8">
+
+<!-- Filter Opsi di atas Search -->
+<section class="bg-white p-4 rounded-xl shadow mb-4">
+    <div class="flex space-x-4 border-b border-gray-300 mb-4">
+        <button id="tab-ebook" class="px-4 py-2 border-b-2 border-transparent text-gray-700 hover:text-indigo-600 hover:border-indigo-600 transition-colors duration-200">
+            Beranda Pinjam
+        </button>
+        <button id="tab-history" class="px-4 py-2 border-b-2 border-transparent text-gray-700 hover:text-indigo-600 hover:border-indigo-600 transition-colors duration-200">
+            Riwayat & Status Peminjaman
+        </button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-2 sm:space-y-0">
+        <input type="text" id="search-input" placeholder="Cari Ebook..." 
+            class="flex-grow p-2 border rounded">
+
+        <button id="search-button" 
+                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center space-x-1">
+            <i class="fas fa-search"></i><span>Cari</span>
+        </button>
+    </div>
+
+    <div id="jenis-pinjam-options" 
+    class="hidden bg-gray-100 p-3 rounded-lg shadow mb-4 mt-3 flex space-x-3 justify-start flex-wrap gap-y-2">
+
+   <button data-status="" 
+       class="pinjam-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded hover:bg-indigo-100 transition">
+       Semua
+   </button>
+
+   <button data-status="DIAJUKAN"
+       class="pinjam-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded hover:bg-yellow-100 transition">
+       Diajukan
+   </button>
+   
+   <button data-status="DISETUJUI"
+       class="pinjam-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded hover:bg-blue-100 transition">
+       Disetujui
+   </button>
+
+   <button data-status="DIPINJAM"
+       class="pinjam-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded hover:bg-indigo-100 transition">
+       Dipinjam
+   </button>
+
+   <button data-status="DIKEMBALIKAN"
+       class="pinjam-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded hover:bg-green-100 transition">
+       Dikembalikan
+   </button>
+
+   <button data-status="DITOLAK"
+       class="pinjam-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded hover:bg-red-100 transition">
+       Ditolak
+   </button>
+
+   <button data-status="DIBATALKAN"
+       class="pinjam-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded hover:bg-orange-100 transition">
+       Dibatalkan
+   </button>
+
+   <button data-status="HILANG"
+       class="pinjam-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded hover:bg-gray-300 transition">
+       Hilang
+   </button>
+
+</div>
+
+
+</section>
+
+    <h2 class="text-2xl font-bold mb-4">Daftar Buku</h2>
+    <section id="book-list-container" class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
+        <p class="col-span-full text-center text-gray-500">Memuat daftar...</p>
+    </section>
+
+    <section id="history-container" class="flex flex-col gap-4"></section>
+
+
+    <!-- Overlay gelap -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
+
+    <!-- Sidebar Profil -->
+    <aside id="profile-sidebar" class="fixed top-0 right-0 w-80 bg-white h-full shadow-lg transform translate-x-full transition-transform duration-300 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center bg-indigo-600 text-white">
+            <h2 class="text-lg font-bold">Profil Pengguna</h2>
+            <button id="close-sidebar" class="hover:text-red-300">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="p-6 text-center">
+            <img src="{{.User.ProfilePicture}}" 
+                alt="Foto Profil"
+                class="w-28 h-28 rounded-full mx-auto mb-4 border-4 border-indigo-500 object-cover"
+                onerror="this.src='img/default_user.png'">
+
+            <h3 class="text-xl font-semibold mb-1">{{.User.Fullname}}</h3>
+            <p class="text-gray-600 text-sm mb-1">@{{.User.Username}}</p>
+            <p class="text-gray-600 text-sm mb-3">{{.User.Email}}</p>
+
+            <span class="inline-block bg-indigo-100 text-indigo-700 text-xs px-3 py-1 rounded-full mb-4">
+                {{.User.Role}}
+            </span>
+
+            <a href="/profile/edit-photo" class="block w-full border border-indigo-600 text-indigo-600 px-4 py-2 rounded hover:bg-indigo-50 mb-3">
+                <i class="fas fa-camera mr-2"></i>Ubah Foto Profil
+            </a>
+
+            <a href="/profile/reset-password-member" class="block w-full border border-yellow-600 text-yellow-600 px-4 py-2 rounded hover:bg-yellow-50 mb-3">
+                <i class="fas fa-key mr-2"></i>Reset Password
+            </a>
+
+            <a href="/logout" class="block bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </a>
+        </div>
+    </aside>
+
+
+<script src="/js/pengajuan_pinjam.js" defer></script>
+<script src="/js/profil.js"></script>
+
+</body>
+
+
+</html>

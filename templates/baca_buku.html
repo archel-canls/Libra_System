@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Membaca: {{.Title}} | Libra</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        /* Sembunyikan scrollbar default tapi tetap bisa scroll */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+        body::-webkit-scrollbar-track {
+            background: #1e1e24;
+        }
+        body::-webkit-scrollbar-thumb {
+            background: #4f46e5;
+            border-radius: 4px;
+        }
+
+        /* Container PDF */
+        #pdf-wrapper {
+            background-color: #1a1a1a; /* Dark background agar fokus */
+            min-height: 100vh;
+            padding-top: 80px; /* Space untuk header fixed */
+            padding-bottom: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Styling Halaman PDF */
+        .pdf-page {
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            background-color: white;
+            transition: transform 0.2s ease;
+        }
+
+        /* Loading Placeholder */
+        .page-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #2d2d2d;
+            color: #666;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        /* Indikator Halaman Mengambang */
+        .page-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(5px);
+            z-index: 50;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <header class="fixed top-0 left-0 w-full bg-gradient-to-r from-indigo-900 to-indigo-700 text-white p-4 flex justify-between items-center shadow-lg z-50 border-b border-indigo-500/30">
+        <div class="flex items-center gap-4">
+            <button onclick="goBack()" class="group flex items-center gap-2 text-gray-300 hover:text-white transition focus:outline-none">
+                <div class="w-8 h-8 rounded-full bg-indigo-800 flex items-center justify-center group-hover:bg-indigo-600 transition shadow-md">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+                <span class="hidden sm:inline font-medium">Kembali</span>
+            </button>
+            
+            <div class="border-l border-indigo-500/50 h-6 mx-2 hidden sm:block"></div>
+            <h1 class="font-bold text-lg truncate max-w-xs md:max-w-md tracking-wide">{{.Title}}</h1>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <div id="loading-indicator" class="hidden text-sm text-yellow-400 animate-pulse">
+                <i class="fas fa-circle-notch fa-spin mr-1"></i> Memuat...
+            </div>
+            <div class="text-xs bg-indigo-800 px-3 py-1 rounded-full border border-indigo-600 shadow-sm">
+                <i class="fas fa-book-reader mr-1"></i> Mode Baca HD
+            </div>
+        </div>
+    </header>
+
+    <div id="pdf-wrapper">
+        </div>
+
+    <div class="page-indicator">
+        Halaman <span id="current-page-display" class="font-bold text-indigo-400">1</span> / <span id="total-pages-display">--</span>
+    </div>
+
+    <script>
+        const url = '/{{.EbookFile}}';
+        const bookId = "{{.BookID}}";
+        const wrapper = document.getElementById('pdf-wrapper');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const currentPageDisplay = document.getElementById('current-page-display');
+        const totalPagesDisplay = document.getElementById('total-pages-display');
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        let pdfDoc = null;
+        let lastSavedPage = 1;
+        let isSaving = false;
+        
+        // --- FUNGSI KEMBALI CERDAS ---
+        function goBack() {
+            // Jika ada history browser (user datang dari halaman lain)
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Fallback: Jika dibuka di tab baru, arahkan ke halaman utama member
+                window.location.href = '/member';
+            }
+        }
+
+        // Konfigurasi Observer (Untuk mendeteksi halaman mana yang sedang dilihat)
+        let observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.5 // Halaman dianggap aktif jika 50% terlihat
+        };
+
+        // Konfigurasi Render (Untuk Lazy Loading gambar)
+        let renderObserverOptions = {
+            root: null,
+            rootMargin: '200px', // Render 200px sebelum halaman masuk layar
+            threshold: 0
+        };
+
+        // 1. Inisialisasi
+        async function init() {
+            loadingIndicator.classList.remove('hidden');
+            try {
+                // Ambil halaman terakhir dari server
+                const res = await fetch(`/api/ebook/progress?bookId=${bookId}`);
+                const data = await res.json();
+                lastSavedPage = data.page || 1;
+            } catch (e) {
+                console.warn("Gagal ambil progress, default ke halaman 1", e);
+            }
+
+            try {
+                const loadingTask = pdfjsLib.getDocument(url);
+                pdfDoc = await loadingTask.promise;
+                
+                totalPagesDisplay.textContent = pdfDoc.numPages;
+                loadingIndicator.classList.add('hidden');
+
+                // Generate Placeholder untuk SEMUA halaman dulu
+                generatePlaceholders();
+
+                // Scroll ke halaman terakhir dibaca
+                scrollToPage(lastSavedPage);
+
+            } catch (err) {
+                loadingIndicator.textContent = "Error";
+                alert("Gagal memuat Ebook: " + err.message);
+            }
+        }
+
+        // 2. Buat Elemen Kosong (Placeholder)
+        function generatePlaceholders() {
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
+                // Buat Container Halaman
+                const div = document.createElement('div');
+                div.className = 'page-container relative mb-6';
+                div.id = `page-container-${i}`;
+                div.dataset.pageNumber = i;
+
+                // Tentukan ukuran dasar
+                const baseWidth = Math.min(window.innerWidth * 0.95, 800); 
+                const baseHeight = baseWidth * 1.41; 
+
+                div.style.width = `${baseWidth}px`;
+                div.style.height = `${baseHeight}px`;
+                div.style.backgroundColor = 'white'; 
+
+                // Elemen Canvas
+                const canvas = document.createElement('canvas');
+                canvas.id = `page-${i}`;
+                canvas.className = 'pdf-page hidden'; 
+                div.appendChild(canvas);
+
+                // Elemen Loading
+                const loader = document.createElement('div');
+                loader.className = 'absolute inset-0 flex items-center justify-center text-gray-400';
+                loader.innerHTML = `<i class="fas fa-spinner fa-spin text-3xl"></i><span class="ml-2">Hal ${i}</span>`;
+                loader.id = `loader-${i}`;
+                div.appendChild(loader);
+
+                wrapper.appendChild(div);
+
+                // Pasang Observer
+                renderObserver.observe(div);
+                progressObserver.observe(div);
+            }
+        }
+
+        // 3. Render Observer
+        const renderObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const pageNum = parseInt(entry.target.dataset.pageNumber);
+                    renderPage(pageNum, entry.target);
+                    renderObserver.unobserve(entry.target);
+                }
+            });
+        }, renderObserverOptions);
+
+        // 4. Fungsi Render Inti (HD Quality)
+        async function renderPage(num, container) {
+            try {
+                const page = await pdfDoc.getPage(num);
+                
+                const pixelRatio = window.devicePixelRatio || 1;
+                const desiredWidth = container.clientWidth;
+                const viewport = page.getViewport({ scale: 1 });
+                const scale = (desiredWidth / viewport.width) * pixelRatio; 
+
+                const scaledViewport = page.getViewport({ scale: scale });
+
+                const canvas = document.getElementById(`page-${num}`);
+                const ctx = canvas.getContext('2d');
+                const loader = document.getElementById(`loader-${num}`);
+
+                canvas.height = scaledViewport.height;
+                canvas.width = scaledViewport.width;
+
+                canvas.style.width = `${desiredWidth}px`;
+                canvas.style.height = `${(scaledViewport.height / pixelRatio)}px`;
+                
+                container.style.height = canvas.style.height;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: scaledViewport
+                };
+
+                await page.render(renderContext).promise;
+
+                canvas.classList.remove('hidden');
+                if(loader) loader.remove();
+
+            } catch (e) {
+                console.error("Render error page " + num, e);
+            }
+        }
+
+        // 5. Progress Observer
+        const progressObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const pageNum = parseInt(entry.target.dataset.pageNumber);
+                    currentPageDisplay.textContent = pageNum;
+                    
+                    clearTimeout(isSaving);
+                    isSaving = setTimeout(() => {
+                        saveProgress(pageNum);
+                    }, 1000);
+                }
+            });
+        }, observerOptions);
+
+        // 6. Scroll Helper
+        function scrollToPage(num) {
+            const target = document.getElementById(`page-container-${num}`);
+            if (target) {
+                setTimeout(() => {
+                    target.scrollIntoView({ behavior: 'auto', block: 'start' });
+                }, 100);
+            }
+        }
+
+        // 7. Simpan ke API
+        async function saveProgress(page) {
+            if (page <= 1) return; 
+            try {
+                await fetch('/api/ebook/progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bookId: parseInt(bookId), page: page })
+                });
+            } catch (e) {
+                console.error("Gagal save progress", e);
+            }
+        }
+
+        // Jalankan
+        init();
+    </script>
+</body>
+</html>

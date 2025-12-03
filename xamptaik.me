@@ -1,0 +1,226 @@
+console.log("Admin.js loaded"); // pastikan ini muncul di console
+
+// --- Fungsi cek login ---
+async function checkLogin() {
+    try {
+        const res = await fetch('/api/check-session');
+        const data = await res.json();
+        console.log("Login check:", data);
+
+        if (!data.loggedIn) {
+            alert('Silakan login terlebih dahulu.');
+            window.location.href = '/login';
+        }
+    } catch (err) {
+        console.error("Check login error:", err);
+        window.location.href = '/login';
+    }
+}
+
+// --- Jalankan setelah halaman siap ---
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("DOM fully loaded");
+
+    // --- Elemen utama ---
+    const container = document.getElementById('book-list-container');
+    const searchInput = document.getElementById('search-input');
+    const searchBtn = document.getElementById('search-button');
+
+    const addBar = document.getElementById('add-book-bar-container');
+    const toggleAddBtn = document.getElementById('toggle-add-bar-btn');
+    const cancelAddBtn = document.getElementById('cancel-add-btn');
+
+    const filterBtn = document.getElementById('filter-button');
+    const filterDropdown = document.getElementById('filter-dropdown');
+    const currentFilterText = document.getElementById('current-filter-text');
+    const jenisBukuOptions = document.getElementById('jenis-buku-options');
+    const kategoriBukuOptions = document.getElementById('kategori-buku-options');
+
+    console.log("Container:", container, "Search input:", searchInput, "Search button:", searchBtn);
+
+    // --- Toggle Form Tambah Buku ---
+    if (toggleAddBtn && addBar) {
+        toggleAddBtn.addEventListener('click', () => {
+            console.log("Toggle add bar clicked");
+            addBar.classList.toggle('show');
+        });
+    }
+
+    if (cancelAddBtn && addBar) {
+        cancelAddBtn.addEventListener('click', () => {
+            console.log("Cancel add bar clicked");
+            addBar.classList.remove('show');
+        });
+    }
+
+    // --- Toggle Filter Dropdown ---
+    if (filterBtn && filterDropdown) {
+        filterBtn.addEventListener('click', () => {
+            console.log("Filter button clicked");
+            filterDropdown.classList.toggle('show');
+        });
+    }
+
+    // --- Saat klik salah satu filter ---
+    if (filterDropdown && currentFilterText) {
+        filterDropdown.querySelectorAll('a').forEach(a => {
+            a.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log("Filter selected:", a.dataset.filter);
+                currentFilterText.textContent = a.textContent;
+                filterDropdown.classList.remove('show');
+
+                // Tampilkan tombol sesuai filter
+                if (a.dataset.filter === "jenis_buku") {
+                    jenisBukuOptions?.classList.remove("hidden");
+                    kategoriBukuOptions?.classList.add("hidden");
+                } else if (a.dataset.filter === "kategori_buku") {
+                    kategoriBukuOptions?.classList.remove("hidden");
+                    jenisBukuOptions?.classList.add("hidden");
+                } else {
+                    jenisBukuOptions?.classList.add("hidden");
+                    kategoriBukuOptions?.classList.add("hidden");
+                }
+            });
+        });
+    }
+
+    // --- Klik tombol jenis buku ---
+    if (jenisBukuOptions) {
+        jenisBukuOptions.querySelectorAll('.jenis-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.type;
+                console.log("Jenis buku dipilih:", type);
+                loadBooks(type);
+            });
+        });
+    }
+
+    // --- Klik tombol kategori buku ---
+    if (kategoriBukuOptions) {
+        kategoriBukuOptions.querySelectorAll('.kategori-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const category = btn.dataset.category;
+                console.log("Kategori buku dipilih:", category);
+                loadBooksByCategory(category);
+            });
+        });
+    }
+
+    // --- Fungsi memuat buku (umum) ---
+    async function loadBooks(searchQuery = '') {
+        console.log("loadBooks called with query:", searchQuery);
+        container.innerHTML = '<p class="col-span-full text-center text-gray-500">Memuat daftar...</p>';
+
+        let url = '/books';
+        // Filter query (bisa dari search atau jenis)
+        if (["Ebook", "Buku Fisik", "Fisik & Ebook"].includes(searchQuery)) {
+            url += `?type=${encodeURIComponent(searchQuery)}`;
+        } else if (searchQuery) {
+            url += `?search=${encodeURIComponent(searchQuery)}`;
+        }
+
+        console.log("Fetch URL:", url);
+
+        try {
+            const res = await fetch(url);
+            const text = await res.text();
+            const books = JSON.parse(text);
+
+            renderBooks(books);
+        } catch (err) {
+            console.error("Load books error:", err);
+            container.innerHTML = '<p class="col-span-full text-center text-red-500">Gagal memuat buku.</p>';
+        }
+    }
+
+    // --- Fungsi memuat buku berdasarkan kategori ---
+    async function loadBooksByCategory(category = '') {
+        console.log("loadBooksByCategory called with:", category);
+        container.innerHTML = '<p class="col-span-full text-center text-gray-500">Memuat daftar...</p>';
+
+        let url = `/books?category=${encodeURIComponent(category)}`;
+        console.log("Fetch URL:", url);
+
+        try {
+            const res = await fetch(url);
+            const text = await res.text();
+            const books = JSON.parse(text);
+            renderBooks(books);
+        } catch (err) {
+            console.error("Load books by category error:", err);
+            container.innerHTML = '<p class="col-span-full text-center text-red-500">Gagal memuat buku kategori.</p>';
+        }
+    }
+
+    // --- Fungsi untuk menampilkan daftar buku ---
+    function renderBooks(books) {
+        container.innerHTML = '';
+        if (!books || books.length === 0) {
+            container.innerHTML = '<p class="col-span-full text-center text-gray-500">Tidak ada buku ditemukan.</p>';
+            return;
+        }
+
+        books.forEach(book => {
+            console.log("Rendering book:", book);
+
+            const card = document.createElement('div');
+            card.className = 'bg-white p-4 rounded-lg shadow max-w-xs mx-auto flex flex-col cursor-pointer hover:shadow-lg transition';
+
+            card.addEventListener('click', () => {
+                console.log("Card clicked, book id:", book.id);
+                window.location.href = `buka_buku_admin.html?id=${book.id}`;
+            });
+
+            if (book.coverFile) {
+                const img = document.createElement('img');
+                img.src = '/' + book.coverFile;
+                img.alt = book.title;
+                img.className = 'w-full aspect-[2/3] object-cover rounded mb-3';
+                card.appendChild(img);
+            } else {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'w-full aspect-[2/3] bg-gray-200 rounded mb-3 flex items-center justify-center';
+                placeholder.innerHTML = '<i class="fas fa-book text-gray-400 text-3xl"></i>';
+                card.appendChild(placeholder);
+            }
+
+            const title = document.createElement('h3');
+            title.textContent = book.title;
+            title.className = 'font-bold text-lg mb-1 truncate';
+            card.appendChild(title);
+
+            const author = document.createElement('p');
+            author.textContent = `${book.author} (${book.year})`;
+            author.className = 'text-sm text-gray-600 mb-1';
+            card.appendChild(author);
+
+            const category = document.createElement('p');
+            category.textContent = book.category;
+            category.className = 'text-gray-700 text-sm line-clamp-3';
+            card.appendChild(category);
+
+            container.appendChild(card);
+        });
+    }
+
+    // --- Handler untuk pencarian ---
+    if (searchBtn && searchInput) {
+        searchBtn.addEventListener('click', () => {
+            const query = searchInput.value.trim();
+            console.log("Search button clicked, query:", query);
+            loadBooks(query);
+        });
+
+        searchInput.addEventListener('keyup', e => {
+            if (e.key === 'Enter') {
+                const query = searchInput.value.trim();
+                console.log("Enter pressed in search input, query:", query);
+                loadBooks(query);
+            }
+        });
+    }
+
+    // --- Load semua buku saat halaman dibuka ---
+    loadBooks();
+});

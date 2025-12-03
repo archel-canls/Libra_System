@@ -1,0 +1,79 @@
+/* Dashboard Admin Custom Styles */
+
+/* Header */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+/* Sidebar Profil */
+#profile-sidebar {
+    width: 18rem;
+    background-color: #ffffff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    border-left: 1px solid #e5e7eb;
+}
+#profile-sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+#profile-sidebar a:hover {
+    background-color: #f0f4ff;
+}
+
+/* Overlay ketika sidebar aktif */
+#sidebar-overlay {
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Tombol */
+button {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+button:hover {
+    opacity: 0.9;
+}
+
+/* Detail Buku Card */
+.detail-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+.detail-cover {
+    flex: 1 1 250px;
+}
+.detail-info {
+    flex: 2 1 400px;
+}
+.detail-cover img {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.detail-actions button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Form Edit Buku */
+#edit-book-bar-container {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .detail-flex {
+        flex-direction: column;
+        align-items: center;
+    }
+    .detail-info {
+        width: 100%;
+    }
+}

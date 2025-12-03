@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Buku | Libra Member</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="user-id" content="{{.User.ID}}">
+    <style>
+        .detail-flex {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+        .detail-cover img {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .detail-actions button {
+            width: 100%;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            padding: 10px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        .detail-actions button:hover {
+            opacity: 0.9;
+        }
+        #detail-stock {
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+<!-- Header -->
+<header class="bg-indigo-600 text-white flex items-center justify-between p-4 shadow-lg">
+    <div class="text-xl font-bold">Libra-Member</div>
+    <nav class="space-x-4 hidden md:flex">
+        <a href="/member" class="block px-6 py-2 rounded hover:bg-indigo-500">Beranda</a>
+        <a href="/pengajuan_pinjam" class="block px-6 py-2 rounded hover:bg-indigo-500">Pinjaman Buku</a>
+        <a href="/ebook" class="block px-6 py-2 rounded hover:bg-indigo-500">Ebook</a>
+        <a href="/bookmarkpage" class="block px-6 py-2 rounded hover:bg-indigo-500">BOOKMARK</a>
+        <a href="/feedback" class="block px-6 py-2 rounded hover:bg-indigo-500">Kritik & Saran</a>
+    </nav>
+    <div class="relative">
+        <img src="{{if .User.ProfilePicture}}{{.User.ProfilePicture}}{{else}}/img/default_user.png{{end}}" 
+        alt="Profil"
+        class="w-10 h-10 rounded-full cursor-pointer object-cover border-2 border-white"
+        id="profile-btn">
+    </div>
+</header>
+
+    <!-- Konten Utama -->
+    <main class="container mx-auto px-4 py-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center space-x-2">
+            <i class="fas fa-book-open text-indigo-600"></i>
+            <span>Detail Buku</span>
+        </h2>
+
+        <div class="detail-flex bg-white p-6 rounded-xl shadow">
+            <!-- Cover Buku -->
+            <div class="detail-cover max-w-xs mx-auto relative">
+                <img id="detail-cover" src="/img/default_book.png" alt="Cover Buku" class="rounded-lg shadow-md">
+
+                <!-- Tombol Bookmark di pojok kanan atas cover -->
+                <button id="bookmark-btn" 
+                        class="absolute top-4 right-4 bg-yellow-500 text-white p-4 rounded-md shadow-md hover:bg-yellow-600 transition flex items-center justify-center"
+                        title="Bookmark Buku">
+                    <i class="fas fa-bookmark"></i>
+                </button>
+
+                <div class="detail-actions mt-6 flex flex-col gap-2">
+                    <button id="btn-pinjam" data-book-id="1" class="bg-green-600 text-white hover:bg-green-700 w-full rounded-md py-2 flex items-center justify-center gap-2">
+                        <i class="fas fa-book-reader"></i> Pinjam Buku
+                    </button>
+                    <button id="btn-baca" class="bg-blue-600 text-white hover:bg-blue-700 w-full rounded-md py-2 flex items-center justify-center gap-2 hidden">
+                        <i class="fas fa-eye"></i> Baca Ebook
+                    </button>
+                    <p id="detail-stock" class="text-green-600 mt-2 text-center font-semibold">Memuat stok...</p>
+                </div>
+            </div>
+
+
+            <!-- Info Buku -->
+            <div class="detail-info flex-1">
+                <h1 id="detail-title" class="text-3xl font-bold mb-2">Memuat Judul...</h1>
+                <p id="detail-jenis" class="text-gray-600 italic mb-4">Memuat ID & tipe...</p>
+
+                <hr class="my-3">
+
+                <h3 class="font-semibold text-lg mb-2">Sinopsis</h3>
+                <p id="detail-synopsis" class="text-gray-700 leading-relaxed mb-4">
+                    Memuat sinopsis...
+                </p>
+
+                <hr class="my-3">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2 text-gray-700">
+                    <p><strong>Author:</strong> <span id="detail-author">Memuat...</span></p>
+                    <p><strong>Tahun Terbit:</strong> <span id="detail-tahun">Memuat...</span></p>
+                    <p><strong>Kategori:</strong> <span id="detail-kategori">Memuat...</span></p>
+                    <p><strong>Genre:</strong> <span id="detail-genre">Memuat...</span></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Overlay gelap -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
+
+    <!-- Sidebar Profil -->
+    <aside id="profile-sidebar" class="fixed top-0 right-0 w-80 bg-white h-full shadow-lg transform translate-x-full transition-transform duration-300 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center bg-indigo-600 text-white">
+            <h2 class="text-lg font-bold">Profil Pengguna</h2>
+            <button id="close-sidebar" class="hover:text-red-300">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="p-6 text-center">
+            <img src="{{.User.ProfilePicture}}" 
+                alt="Foto Profil"
+                class="w-28 h-28 rounded-full mx-auto mb-4 border-4 border-indigo-500 object-cover"
+                onerror="this.src='img/default_user.png'">
+
+            <h3 class="text-xl font-semibold mb-1">{{.User.Fullname}}</h3>
+            <p class="text-gray-600 text-sm mb-1">@{{.User.Username}}</p>
+            <p class="text-gray-600 text-sm mb-3">{{.User.Email}}</p>
+
+            <span class="inline-block bg-indigo-100 text-indigo-700 text-xs px-3 py-1 rounded-full mb-4">
+                {{.User.Role}}
+            </span>
+
+            <a href="/profile/edit-photo" class="block w-full border border-indigo-600 text-indigo-600 px-4 py-2 rounded hover:bg-indigo-50 mb-3">
+                <i class="fas fa-camera mr-2"></i>Ubah Foto Profil
+            </a>
+
+            <a href="/profile/reset-password-member" class="block w-full border border-yellow-600 text-yellow-600 px-4 py-2 rounded hover:bg-yellow-50 mb-3">
+                <i class="fas fa-key mr-2"></i>Reset Password
+            </a>
+
+            <a href="/logout" class="block bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </a>
+        </div>
+    </aside>
+    <div id="modal-pinjam" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300" id="modal-content">
+            
+            <div class="bg-indigo-600 text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+                <h3 class="text-xl font-bold flex items-center">
+                    <i class="fas fa-file-signature mr-2"></i> Form Pengajuan Pinjaman
+                </h3>
+                <button id="close-modal-pinjam" class="text-white hover:text-red-200 transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <form id="form-pengajuan" onsubmit="event.preventDefault();">
+                    
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap (Otomatis):</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" value="{{.User.Fullname}}" disabled 
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed font-semibold">
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Nama ini terisi otomatis dari akun yang sedang login.</p>
+                    </div>
+
+                    <div class="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200 shadow-sm">
+                        <h4 class="text-md font-bold text-amber-700 mb-3 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-2"></i> Perhatian Ketentuan:
+                        </h4>
+                        
+                        <div class="space-y-3 text-sm text-gray-700">
+                            <div class="flex items-start">
+                                <i class="fas fa-clock mt-1 mr-3 text-indigo-600"></i>
+                                <span>Lama <strong>Peminjaman Maksimal 7 hari</strong> setelah buku diambil.</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-calendar-check mt-1 mr-3 text-indigo-600"></i>
+                                <span>Buku <strong>harus diambil</strong> dari Perpustakaan <strong>dalam 3 hari</strong> setelah pengajuan diterima.</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-wallet mt-1 mr-3 text-red-600"></i>
+                                <span>Denda keterlambatan: <strong>Rp 10.000 (awal) + Rp 5.000/hari</strong>.</span>
+                            </div>
+                            <div class="flex items-start font-bold text-red-600 bg-red-50 p-2 rounded">
+                                <i class="fas fa-skull-crossbones mt-1 mr-3"></i>
+                                <span>Jika HILANG, denda ganti rugi sebesar: <br>
+                                    <span id="pinjam-denda-hilang" class="text-lg">Rp 0</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button type="button" id="btn-batal-pinjam" class="w-1/3 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition">
+                            Batal
+                        </button>
+                        <button type="button" id="btn-konfirmasi-pinjam" class="w-2/3 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition flex items-center justify-center">
+                            <i class="fas fa-paper-plane mr-2"></i> Ajukan Peminjaman
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/buka_buku_member.js"></script>
+    <script src="/js/profil.js"></script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Feedback | Admin Libra</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .modal { transition: opacity 0.25s ease; }
+        body.modal-active { overflow-x: hidden; overflow-y: visible !important; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+<header class="bg-indigo-600 text-white flex items-center justify-between p-4 shadow-lg">
+    <div class="text-xl font-bold">Libra-Admin</div>
+    <nav class="space-x-4 hidden md:flex">
+        <a href="/admin" class="block px-6 py-2 rounded hover:bg-indigo-500">Beranda</a>
+        <a href="/manajemen_pinjam" class="block px-6 py-2 rounded hover:bg-indigo-500">Manajemen Peminjaman</a>
+        <a href="/manajemen_anggota" class="block px-6 py-2 rounded hover:bg-indigo-500">Manajemen Anggota</a>
+        <a href="/feedback" class="block px-6 py-2 rounded bg-indigo-700 font-bold">Kritik & Saran</a>
+    </nav>
+    <div class="relative">
+        <img src="{{if .User.ProfilePicture}}{{.User.ProfilePicture}}{{else}}/img/default_user.png{{end}}" 
+             alt="Profil" class="w-10 h-10 rounded-full object-cover border-2 border-white">
+    </div>
+</header>
+
+<main class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Kotak Masuk Kritik & Saran</h1>
+
+    <div id="adminFeedbackList" class="grid gap-4">
+        <p class="text-center text-gray-500">Memuat data...</p>
+    </div>
+</main>
+
+<div id="replyModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+    <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+    <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
+        
+        <div class="modal-content py-4 text-left px-6">
+            <div class="flex justify-between items-center pb-3">
+                <p class="text-2xl font-bold text-indigo-600">Balas Pesan</p>
+                <div class="modal-close cursor-pointer z-50" onclick="toggleModal()">
+                    <i class="fas fa-times text-gray-500"></i>
+                </div>
+            </div>
+
+            <form id="replyForm">
+                <input type="hidden" id="replyId">
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600 mb-1">Pesan User:</p>
+                    <div id="userMessagePreview" class="bg-gray-100 p-2 rounded text-sm italic text-gray-700 mb-3"></div>
+                    
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Balasan Admin:</label>
+                    <textarea id="replyText" rows="4" class="w-full border rounded px-3 py-2 focus:outline-none focus:border-indigo-500" required></textarea>
+                </div>
+                <div class="flex justify-end pt-2">
+                    <button type="button" class="px-4 bg-transparent p-3 rounded-lg text-indigo-500 hover:bg-gray-100 hover:text-indigo-400 mr-2" onclick="toggleModal()">Batal</button>
+                    <button type="submit" class="px-4 bg-indigo-600 p-3 rounded-lg text-white hover:bg-indigo-700">Kirim Balasan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", loadAdminFeedback);
+
+    async function loadAdminFeedback() {
+        const container = document.getElementById('adminFeedbackList');
+        try {
+            const res = await fetch('/api/feedback');
+            const list = await res.json();
+
+            container.innerHTML = '';
+            if(!list || list.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500">Tidak ada data.</p>';
+                return;
+            }
+
+            list.forEach(item => {
+                const isReplied = item.status === 'sudah dibalas';
+                const statusClass = isReplied ? 'border-l-4 border-green-500' : 'border-l-4 border-yellow-500';
+                
+                let btnAction = '';
+                if(!isReplied) {
+                    btnAction = `<button onclick="openReplyModal(${item.id}, '${item.message.replace(/'/g, "\\'")}')" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700"><i class="fas fa-reply mr-1"></i> Balas</button>`;
+                } else {
+                    btnAction = `<span class="text-green-600 text-sm font-semibold"><i class="fas fa-check-circle"></i> Selesai</span>`;
+                }
+
+                const btnDelete = `<button onclick="deleteFeedback(${item.id})" class="text-red-500 hover:text-red-700 ml-3"><i class="fas fa-trash"></i></button>`;
+
+                const html = `
+                    <div class="bg-white p-4 rounded-lg shadow ${statusClass} flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div class="flex items-start space-x-4 mb-3 md:mb-0 w-full md:w-3/4">
+                            <img src="${item.profilePicture}" class="w-10 h-10 rounded-full object-cover border" onerror="this.src='/img/default_user.png'">
+                            <div>
+                                <h3 class="font-bold text-gray-800">${item.fullname} <span class="text-xs font-normal text-gray-500">@${item.username}</span></h3>
+                                <p class="text-xs text-gray-400 mb-1">${item.dateSent}</p>
+                                <p class="text-gray-700 mt-1">${item.message}</p>
+                                ${item.adminReply ? `<div class="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded"><span class="font-bold">Balasan:</span> ${item.adminReply}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            ${btnAction}
+                            ${btnDelete}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        } catch(err) {
+            console.error(err);
+        }
+    }
+
+    // Modal Logic
+    const modal = document.querySelector('.modal');
+    function toggleModal() {
+        modal.classList.toggle('opacity-0');
+        modal.classList.toggle('pointer-events-none');
+        document.body.classList.toggle('modal-active');
+    }
+
+    function openReplyModal(id, msg) {
+        document.getElementById('replyId').value = id;
+        document.getElementById('userMessagePreview').innerText = msg;
+        document.getElementById('replyText').value = '';
+        toggleModal();
+    }
+
+    // Submit Reply
+    document.getElementById('replyForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = parseInt(document.getElementById('replyId').value);
+        const reply = document.getElementById('replyText').value;
+
+        try {
+            const res = await fetch('/api/feedback/reply', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id, reply })
+            });
+            const data = await res.json();
+            if(data.success) {
+                toggleModal();
+                loadAdminFeedback();
+            } else {
+                alert("Gagal membalas.");
+            }
+        } catch(err) {
+            console.error(err);
+        }
+    });
+
+    // Delete Logic
+    async function deleteFeedback(id) {
+        if(!confirm("Hapus pesan ini?")) return;
+        try {
+            const res = await fetch(`/api/feedback/delete?id=${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if(data.success) loadAdminFeedback();
+        } catch(err) {
+            console.error(err);
+        }
+    }
+</script>
+
+</body>
+</html>

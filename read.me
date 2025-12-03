@@ -1,0 +1,75 @@
+setiap fungsi yang pingin cuma peruser contoh bagian peminjaman setiap user kan punya buku yang dipinjam sendiri maka disesuaikan sesuai id. cara cek id bisa ambli ddari login handler
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+
+	var id int
+	var fullname, email, profilePicture, passwordHash, role string
+
+	err := db.QueryRow("SELECT id, fullname, email, profile_picture, password, role FROM users WHERE username = ?", username).
+		Scan(&id, &fullname, &email, &profilePicture, &passwordHash, &role)
+
+	if err == sql.ErrNoRows {
+		http.SetCookie(w, &http.Cookie{
+			Name:   "login_error",
+			Value:  "Username atau password tidak sesuai",
+			Path:   "/login",
+			MaxAge: 60,
+		})
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	} else if err != nil {
+		http.SetCookie(w, &http.Cookie{
+			Name:   "login_error",
+			Value:  "Database error",
+			Path:   "/login",
+			MaxAge: 60,
+		})
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// cek password
+	err = bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
+	if err != nil {
+		http.SetCookie(w, &http.Cookie{
+			Name:   "login_error",
+			Value:  "Username atau password tidak sesuai",
+			Path:   "/login",
+			MaxAge: 60,
+		})
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// login sukses, buat session lengkap
+	user := User{
+		ID:             id,
+		Username:       username,
+		Fullname:       fullname,
+		Email:          email,
+		Role:           role,
+		ProfilePicture: profilePicture,
+	}
+	sessionID := strconv.FormatInt(time.Now().UnixNano(), 36)
+	sessions[sessionID] = user
+
+	// simpan session di cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:  "session_id",
+		Value: sessionID,
+		Path:  "/",
+	})
+
+	// redirect sesuai role
+	if role == "admin" {
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+	} else {
+		http.Redirect(w, r, "/member", http.StatusSeeOther)
+	}
+}

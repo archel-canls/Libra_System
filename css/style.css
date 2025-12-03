@@ -1,0 +1,455 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+:root {
+    --primary-color: #17a2b8; /* Cyan */
+    --secondary-color: #28a745; /* Green */
+    --accent-color: #ffc107; /* Yellow */
+    --danger-color: #dc3545; /* Red */
+    --bg-light: #f4f4f4;
+    --text-dark: #333;
+}
+
+body {
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 80px auto 20px auto;
+}
+
+/* Header & Navigasi (Responsif) */
+.header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.logo a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.8em;
+    font-weight: 700;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 15px;
+}
+
+.nav-menu a {
+    color: white;
+    text-decoration: none;
+    padding: 8px 12px;
+    transition: background-color 0.3s;
+    border-radius: 4px;
+}
+
+.nav-menu a:hover, .nav-menu a.active {
+    background-color: #138496;
+}
+
+.btn-auth {
+    background-color: var(--accent-color);
+    color: var(--text-dark);
+    border-radius: 5px;
+    padding: 8px 15px !important;
+    font-weight: bold;
+}
+
+.hamburger {
+    display: none;
+    font-size: 1.8em;
+    cursor: pointer;
+}
+
+/* Form Styling & Buttons */
+.form-container {
+    max-width: 450px;
+    margin: 50px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.form-group input, .form-group textarea, .form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.btn-primary {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background-color 0.3s;
+}
+.btn-primary:hover { background-color: #1e7e34; }
+
+/* Search Section */
+.search-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.search-section input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+.search-section button {
+    padding: 10px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.search-section button:hover { background-color: #138496; }
+.filter-options { font-size: 0.85em; color: #666; margin-top: 5px; width: 100%; }
+
+
+/* ROOT VARIABLES & GENERAL STYLES - TETAP */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+:root {
+    --primary-color: #17a2b8; /* Cyan */
+    --secondary-color: #28a745; /* Green */
+    --accent-color: #ffc107; /* Yellow */
+    --danger-color: #dc3545; /* Red */
+    --bg-light: #f4f4f4;
+    --text-dark: #333;
+    --raw-blue: #007bff; /* Biru mentah, sering digunakan untuk link/primary */
+}
+
+body {
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 80px auto 20px auto;
+}
+
+/* ... HEADER, NAVIGASI, FORM, SEARCH STYLES DIBIARKAN TETAP ... */
+
+/* =====================================================
+Book Card Styling (Responsif Grid) - MODIFIKASI BERAT
+===================================================== 
+*/
+.book-list {
+    display: grid; 
+    /* Lebar kolom default: 170px */
+    grid-template-columns: repeat(auto-fit, 170px); 
+    gap: 20px;
+    justify-content: center;
+    text-align: center;
+}
+
+.book-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    width: 170px; 
+    /* * Hapus margin vertikal/padding yang mungkin menyebabkan jarak. 
+     * Karena card adalah container utama, kita fokus pada img.
+     */
+}
+.book-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* =====================================================
+Cover Styling - MODIFIKASI 
+(Menghilangkan Jarak Atas & Mengatur Berat)
+===================================================== 
+*/
+.book-card img {
+    /* 1. Menghilangkan jarak di atas (Hapus margin top) */
+    display: block; 
+    margin: 0 auto; /* Margin 0 di semua sisi, auto kiri/kanan untuk pusat */
+    border-radius: 8px;
+    /* 2. Ukuran tetap dan berat (weight) sama dengan card (170px) */
+    width: 170px; /* Diambil dari lebar book-card */
+    height: 255px; /* Proporsi standar 2:3 (170x255) atau 3:4 (170x226) -> kita pakai 255px agar buku terlihat tinggi */
+    
+    /* Elastis (Full Cover) */
+    object-fit: fill; 
+    
+    /* PENTING: Karena card di-overflow: hidden, card img akan 
+     * mengisi penuh lebar card 170px, dan tinggi 255px. 
+     * Ini memastikan "weight" card dan cover sama di bagian lebar.
+     */
+}
+
+.book-card .book-info {
+    padding: 10px 15px 15px 15px; 
+}
+
+.book-card h3 {
+    font-size: 1.15em; 
+    color: var(--raw-blue); 
+    font-weight: 700; 
+    margin-bottom: 5px;
+    white-space: nowrap;     
+    overflow: hidden;       
+    text-overflow: ellipsis;  
+}
+.book-card p {
+    font-size: 0.85em; 
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    /* Perangkat Kecil (Mobile) */
+    .book-list {
+        grid-template-columns: repeat(auto-fit, 130px); 
+        gap: 15px;
+    }
+    .book-card {
+        width: 130px; /* Sesuaikan lebar card */
+    }
+
+    /* Cover menjadi setengah ukuran dan sama beratnya dengan card */
+    .book-card img {
+        width: 130px; /* Sama dengan lebar card (130px) */
+        height: 195px; /* Proporsi 2:3 (130x195) */
+        margin-top: 0;
+        
+    }
+
+    .book-card .book-info {
+        padding: 8px 10px 10px 10px; 
+    }
+
+    .book-card h3 {
+        font-size: 0.8em; 
+        height: 20px;
+    }
+    .book-card p {
+        font-size: 0.7em; 
+    }
+}
+
+/* Media Query untuk Layar Lebar */
+@media (min-width: 1200px) {
+    .book-list {
+  
+        justify-content: center; 
+    }
+}
+/* Detail Buku (buka_buku.html) - Responsif */
+.detail-flex {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap; /* Pastikan wrap di layar kecil */
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+.detail-cover {
+    flex: 0 0 250px; /* Ukuran cover tetap di layar besar */
+    text-align: center;
+}
+.detail-cover img {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 8px;
+}
+.detail-info {
+    flex-grow: 1;
+    min-width: 300px;
+}
+.detail-actions button {
+    margin-right: 10px;
+    padding: 10px 15px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-top: 10px;
+    transition: opacity 0.3s;
+}
+.detail-actions .bookmarked { background-color: var(--accent-color); color: var(--text-dark); }
+
+
+/* Status Pinjam Styling */
+.status-card {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+.status-card img {
+    width: 60px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+.status-pinjam {
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 4px;
+    display: inline-block;
+    color: white;
+    font-size: 0.9em;
+}
+
+/* Warna Status */
+.status-diajukan { background-color: #ffc107; color: #333; }
+.status-diacc { background-color: #17a2b8; }
+.status-dipinjam { background-color: #007bff; }
+.status-ditolak, .status-dibatalkan { background-color: #6c757d; }
+.status-dikembalikan { background-color: #28aa45; }
+.status-telat { background-color: var(--danger-color); color: yellow; animation: blinker 1s linear infinite; }
+
+/* Admin Styling */
+.admin-card {
+    border-left: 5px solid var(--primary-color);
+    margin-bottom: 15px !important;
+    padding: 15px;
+    background: #fff;
+    border-radius: 4px;
+}
+
+/* --- TOMBOL AKSI ADMIN DENGAN JARAK ATAS/BAWAH --- */
+.btn-action {
+    /* Membuat tombol berada di barisnya sendiri dan menghormati margin vertikal */
+    display: block; 
+    
+    /* Jarak atas dan bawah pada setiap tombol */
+    margin-top: 5px; 
+    margin-bottom: 5px; 
+    
+    /* Styling dasar */
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    text-align: center;
+    transition: background-color 0.3s;
+}
+
+/* Warna spesifik untuk setiap aksi */
+.btn-action.acc { 
+    background-color: var(--secondary-color); /* Green */
+    color: white;
+}
+.btn-action.acc:hover { background-color: #1e7e34; }
+
+.btn-action.tolak, .btn-action.batal { 
+    background-color: var(--danger-color); /* Red */
+    color: white; 
+}
+.btn-action.tolak:hover, .btn-action.batal:hover { background-color: #a71d2a; }
+
+.btn-action.pinjam { 
+    background-color: var(--primary-color); /* Cyan */
+    color: white; 
+}
+.btn-action.pinjam:hover { background-color: #138496; }
+
+.btn-action.kembali { 
+    background-color: #007bff; /* Blue */
+    color: white;
+}
+.btn-action.kembali:hover { background-color: #0056b3; }
+/* ------------------------------------------------ */
+
+
+/* Media Queries (Responsif) */
+@media (max-width: 768px) {
+    /* Menu Burger */
+    .nav-menu {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        width: 100%;
+        background-color: var(--primary-color);
+        padding-bottom: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    .nav-menu.active {
+        display: flex;
+    }
+    .nav-menu a {
+        margin: 5px 20px;
+        padding: 10px 0;
+        border-bottom: 1px solid #138496;
+        text-align: center;
+    }
+    .nav-menu a:last-child {
+        border-bottom: none;
+    }
+    .hamburger {
+        display: block;
+    }
+    
+    /* Search Section */
+    .search-section {
+        flex-direction: column;
+    }
+    .search-section button {
+        width: 100%;
+    }
+
+    /* Book Detail */
+    .detail-cover {
+        flex: 1 1 100%; /* Cover ambil lebar penuh */
+    }
+    .detail-cover img {
+        max-width: 200px; /* Batasi lebar cover agar tidak terlalu besar */
+        margin: auto;
+    }
+    .detail-info {
+        min-width: 100%;
+    }
+}

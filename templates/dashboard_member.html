@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beranda | Libra</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    /* --- Form Tambah Buku --- */
+    #add-book-bar-container {
+        transition: all 0.5s ease;
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+    }
+    #add-book-bar-container.show {
+        max-height: 1500px;
+        opacity: 1;
+        margin-bottom: 20px;
+    }
+
+    /* --- Modal Genre --- */
+    .custom-genre-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        background-color: rgba(0,0,0,0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 50;
+    }
+    .custom-genre-modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+    }
+
+    /* --- Filter Dropdown --- */
+    #filter-dropdown {
+        position: absolute;
+        left: 0;
+        margin-top: 0.25rem;
+        width: 12rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(95%);
+        transition: all 0.2s ease-in-out;
+        z-index: 20;
+    }
+    #filter-dropdown.show {
+        opacity: 1;
+        visibility: visible;
+        transform: scale(100%);
+    }
+    #filter-dropdown a {
+        display: block;
+        padding: 0.5rem 1rem;
+        color: #374151;
+        text-decoration: none;
+        border-radius: 0.375rem;
+    }
+    #filter-dropdown a:hover {
+        background: #e0e7ff;
+        color: #1d4ed8;
+    }
+
+#filter-dropdown {
+    display: none; /* default hidden */
+}
+
+#filter-dropdown.show {
+    display: block; /* tampilkan saat toggle */
+}
+/* --- Styles Carousel --- */
+.book-carousel {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        background-color: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem; /* Jarak dengan search bar */
+        min-height: 200px;
+    }
+    .carousel-inner {
+        display: flex;
+        transition: transform 0.5s ease-in-out;
+        height: 100%;
+    }
+    .carousel-item-link {
+        min-width: 100%;
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        background-color: #eef2ff; /* Indigo-50 looks */
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+    }
+    .carousel-cover-container {
+        flex-shrink: 0;
+        width: 120px;
+        height: 180px;
+        margin-right: 20px;
+    }
+    .carousel-cover-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 6px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .carousel-text {
+        flex: 1;
+    }
+    /* Tombol Navigasi */
+    .carousel-control {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(79, 70, 229, 0.2); /* Indigo transparan */
+        color: #4338ca;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+        z-index: 10;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .carousel-control:hover {
+        background: #4f46e5;
+        color: white;
+    }
+    #prev-btn { left: 10px; }
+    #next-btn { right: 10px; }
+    
+    /* Responsive Mobile */
+    @media (max-width: 640px) {
+        .carousel-cover-container {
+            width: 80px;
+            height: 120px;
+            margin-right: 15px;
+        }
+        .carousel-text h3 {
+            font-size: 1.1rem;
+        }
+        .carousel-text p {
+            font-size: 0.8rem;
+            line-clamp: 3; 
+            -webkit-line-clamp: 3;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    }
+
+    
+</style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+<!-- Header -->
+<header class="bg-indigo-600 text-white flex items-center justify-between p-4 shadow-lg">
+    <div class="text-xl font-bold">Libra-Member</div>
+    <nav class="space-x-4 hidden md:flex">
+        <a href="/member" class="block px-6 py-2 rounded hover:bg-indigo-500">Beranda</a>
+        <a href="/pengajuan_pinjam" class="block px-6 py-2 rounded hover:bg-indigo-500">Pinjaman Buku</a>
+        <a href="/ebook" class="block px-6 py-2 rounded hover:bg-indigo-500">Ebook</a>
+        <a href="/bookmarkpage" class="block px-6 py-2 rounded hover:bg-indigo-500">BOOKMARK</a>
+        <a href="/feedback" class="block px-6 py-2 rounded hover:bg-indigo-500">Kritik & Saran</a>
+    </nav>
+    <div class="relative">
+        <img src="{{if .User.ProfilePicture}}{{.User.ProfilePicture}}{{else}}/img/default_user.png{{end}}" 
+        alt="Profil"
+        class="w-10 h-10 rounded-full cursor-pointer object-cover border-2 border-white"
+        id="profile-btn">
+    </div>
+</header>
+
+<main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-4 py-8">
+
+        <section class="book-carousel" id="book-carousel-container">
+            <div id="carousel-inner" class="carousel-inner">
+                <div class="carousel-item-link flex justify-center items-center h-full w-full">
+                    <div class="text-center w-full py-10">
+                        <i class="fas fa-spinner fa-spin text-2xl text-indigo-600"></i>
+                        <p class="text-gray-500 mt-2">Memuat rekomendasi...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="prev-btn" class="carousel-control hidden"><i class="fas fa-chevron-left"></i></button>
+            <button id="next-btn" class="carousel-control hidden"><i class="fas fa-chevron-right"></i></button>
+        </section>
+    <section class="bg-white p-4 rounded-xl shadow flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-2 sm:space-y-0 mb-2">
+        <input type="text" id="search-input" placeholder="Masukan Judul Buku atau Genre..." class="flex-grow p-2 border rounded">
+
+        <div class="relative">
+            <button id="filter-button" class="px-4 py-2 bg-indigo-600 text-white rounded flex items-center space-x-2 hover:bg-indigo-700">
+                <i class="fas fa-filter"></i>
+                <span id="current-filter-text">Semua</span>
+                <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+
+            <div id="filter-dropdown" class="hidden absolute bg-white border rounded shadow mt-2 z-50 w-40">
+                <a href="#" data-filter="all" class="block px-3 py-2 hover:bg-gray-100">Semua</a>
+                <a href="#" data-filter="jenis_buku" class="block px-3 py-2 hover:bg-gray-100">Jenis Buku</a>
+                <a href="#" data-filter="kategori" class="block px-3 py-2 hover:bg-gray-100">Kategori</a>
+                <a href="#" data-filter="genre" class="block px-3 py-2 hover:bg-gray-100">Genre</a>
+            </div>
+            
+            </div>
+
+        <button id="search-button" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center space-x-1">
+            <i class="fas fa-search"></i><span>Cari</span>
+        </button>
+    </section>
+
+    <div id="jenis-buku-options" class="hidden bg-gray-100 p-3 rounded-lg shadow mb-4 flex space-x-3 justify-start">
+        <button data-type="Ebook" class="jenis-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Ebook
+        </button>
+        <button data-type="Buku Fisik" class="jenis-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Fisik
+        </button>
+        <button data-type="Fisik & Ebook" class="jenis-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Ebook & Fisik
+        </button>
+    </div>
+
+    <div id="kategori-buku-options" class="hidden bg-gray-100 p-3 rounded-lg shadow mb-4 flex space-x-3 justify-start">
+        <button data-category="Fiksi" class="kategori-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Fiksi
+        </button>
+        <button data-category="Non fiksi" class="kategori-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Non fiksi
+        </button>
+    </div>
+
+    <div id="genre-buku-options" class="hidden bg-gray-100 p-3 rounded-lg shadow mb-4 flex flex-wrap items-center gap-2">
+        <button data-genre="Komedi" class="genre-btn px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-purple-700 hover:bg-purple-200 transition text-sm">
+            Komedi
+        </button>
+        <button data-genre="Horor" class="genre-btn px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-purple-700 hover:bg-purple-200 transition text-sm">
+            Horor
+        </button>
+        <button data-genre="Romance" class="genre-btn px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-purple-700 hover:bg-purple-200 transition text-sm">
+            Romance
+        </button>
+        <button data-genre="Sejarah" class="genre-btn px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-purple-700 hover:bg-purple-200 transition text-sm">
+            Sejarah
+        </button>
+        <button data-genre="Misteri" class="genre-btn px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-purple-700 hover:bg-purple-200 transition text-sm">
+            Misteri
+        </button>
+        
+        <div class="flex items-center ml-2">
+            <input type="text" id="custom-genre-input" placeholder="+ Tag Genre..." 
+                   class="px-3 py-2 border border-gray-300 rounded-l-full text-sm focus:outline-none focus:border-indigo-500 w-32">
+            <button id="add-genre-btn" class="bg-indigo-600 text-white px-3 py-2 rounded-r-full hover:bg-indigo-700 text-sm">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </div>
+    </section>
+
+    <!-- Pilihan Jenis Buku -->
+    <div id="jenis-buku-options" class="hidden bg-gray-100 p-3 rounded-lg shadow mb-4 flex space-x-3 justify-start">
+        <button data-type="Ebook" class="jenis-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Ebook
+        </button>
+        <button data-type="Buku Fisik" class="jenis-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Fisik
+        </button>
+        <button data-type="Fisik & Ebook" class="jenis-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Ebook & Fisik
+        </button>
+    </div>
+
+    <!-- Pilihan Kategori Buku -->
+    <div id="kategori-buku-options" class="hidden bg-gray-100 p-3 rounded-lg shadow mb-4 flex space-x-3 justify-start">
+        <button data-category="Fiksi" class="kategori-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Fiksi
+        </button>
+        <button data-category="Non fiksi" class="kategori-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Non fiksi
+        </button>
+    </div>
+
+
+    <!-- Daftar Buku -->
+    <h2 class="text-2xl font-bold mb-4">Daftar Buku</h2>
+<section id="book-list-container" class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
+    <p class="col-span-full text-center text-gray-500">Memuat daftar...</p>
+</section>
+
+</main>
+
+
+<!-- Overlay gelap -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
+
+<!-- Sidebar Profil -->
+<aside id="profile-sidebar" class="fixed top-0 right-0 w-80 bg-white h-full shadow-lg transform translate-x-full transition-transform duration-300 z-50 overflow-y-auto">
+    <div class="p-4 border-b flex justify-between items-center bg-indigo-600 text-white">
+        <h2 class="text-lg font-bold">Profil Pengguna</h2>
+        <button id="close-sidebar" class="hover:text-red-300">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="p-6 text-center">
+        <img src="{{.User.ProfilePicture}}" 
+             alt="Foto Profil"
+             class="w-28 h-28 rounded-full mx-auto mb-4 border-4 border-indigo-500 object-cover"
+             onerror="this.src='img/default_user.png'">
+
+        <h3 class="text-xl font-semibold mb-1">{{.User.Fullname}}</h3>
+
+        <p class="text-gray-600 text-sm mb-1">@{{.User.Username}}</p>
+
+        {{if .User.ID}}
+        <p class="text-gray-600 text-sm mb-3">{{.User.Email}}</p>
+        {{end}}
+
+        <span class="inline-block bg-indigo-100 text-indigo-700 text-xs px-3 py-1 rounded-full mb-4">
+            {{.User.Role}}
+        </span>
+
+        {{if .User.ID}}
+            <a href="/profile/edit-photo" class="block w-full border border-indigo-600 text-indigo-600 px-4 py-2 rounded hover:bg-indigo-50 mb-3">
+                <i class="fas fa-camera mr-2"></i>Ubah Foto Profil
+            </a>
+
+            <a href="/profile/reset-password-admin" class="block w-full border border-yellow-600 text-yellow-600 px-4 py-2 rounded hover:bg-yellow-50 mb-3">
+                <i class="fas fa-key mr-2"></i>Reset Password
+            </a>
+
+            <a href="/logout" class="block bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                <i class="fas fa-sign-out-alt mr-2"></i>
+                Logout
+            </a>
+        
+        {{else}}
+            <div class="mt-4 p-4 bg-yellow-50 rounded border border-yellow-200 mb-4 text-sm text-yellow-800">
+                Silakan login untuk meminjam buku, mengakses bookmark, dan fitur lainnya.
+            </div>
+
+            <a href="/login" class="block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 font-bold">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Login Sekarang
+            </a>
+        {{end}}
+    </div>
+</aside>
+
+<script src="/js/member.js" defer></script>
+<script src="/js/profil.js" defer></script>
+
+</body>
+
+
+</html>

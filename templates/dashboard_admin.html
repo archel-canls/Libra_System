@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beranda Admin | Libra</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    /* --- Form Tambah Buku --- */
+    #add-book-bar-container {
+        transition: all 0.5s ease;
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+    }
+    #add-book-bar-container.show {
+        max-height: 1500px;
+        opacity: 1;
+        margin-bottom: 20px;
+    }
+
+    /* --- Modal Genre --- */
+    .custom-genre-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        background-color: rgba(0,0,0,0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 50;
+    }
+    .custom-genre-modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+    }
+
+    /* --- Filter Dropdown --- */
+    #filter-dropdown {
+        position: absolute;
+        left: 0;
+        margin-top: 0.25rem;
+        width: 12rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(95%);
+        transition: all 0.2s ease-in-out;
+        z-index: 20;
+    }
+    #filter-dropdown.show {
+        opacity: 1;
+        visibility: visible;
+        transform: scale(100%);
+    }
+    #filter-dropdown a {
+        display: block;
+        padding: 0.5rem 1rem;
+        color: #374151;
+        text-decoration: none;
+        border-radius: 0.375rem;
+    }
+    #filter-dropdown a:hover {
+        background: #e0e7ff;
+        color: #1d4ed8;
+    }
+
+#filter-dropdown {
+    display: none; /* default hidden */
+}
+
+#filter-dropdown.show {
+    display: block; /* tampilkan saat toggle */
+}
+
+.hidden {
+    display: none;}
+
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const typeSelect = document.getElementById('add-type');
+        const locationField = document.getElementById('location-field');
+        const stockField = document.getElementById('stock-field');
+        const coverField = document.getElementById('add-cover-file').parentElement;
+        
+        // Ambil parent element dari input ebook agar bisa disembunyikan satu blok
+        const ebookField = document.getElementById('add-ebook-file').parentElement; 
+        const fineField = document.getElementById('add-fineAmount').parentElement;
+    
+        function toggleFields() {
+            const type = typeSelect.value;
+    
+            // --- Logika Input Ebook (PDF) ---
+            // Muncul jika Ebook ATAU Fisik & Ebook
+            if (type === 'Ebook' || type === 'Fisik & Ebook') {
+                ebookField.classList.remove('hidden');
+            } else {
+                // Sembunyi jika Buku Fisik
+                ebookField.classList.add('hidden');
+            }
+    
+            // --- Logika Input Fisik (Lokasi, Stok, Denda, Cover) ---
+            if (type === 'Ebook') {
+                // Jika murni Ebook, sembunyikan atribut fisik
+                locationField.classList.add('hidden');
+                stockField.classList.add('hidden');
+                fineField.classList.add('hidden');
+                
+                // Cover opsional/hidden tergantung desain, biasanya Ebook tetap butuh cover
+                // Jika ingin cover tetap ada untuk ebook, hapus baris di bawah ini:
+                // coverField.classList.add('hidden'); 
+                
+                // Reset required fisik
+                locationField.querySelector('input').required = false;
+                stockField.querySelector('input').required = false;
+                document.getElementById('add-fineAmount').required = false;
+    
+            } else {
+                // Jika Buku Fisik ATAU Fisik & Ebook
+                locationField.classList.remove('hidden');
+                stockField.classList.remove('hidden');
+                fineField.classList.remove('hidden');
+                coverField.classList.remove('hidden');
+    
+                locationField.querySelector('input').required = true;
+                stockField.querySelector('input').required = true;
+                document.getElementById('add-fineAmount').required = true;
+            }
+        }
+    
+        // Jalankan saat halaman dimuat & saat dropdown berubah
+        toggleFields();
+        typeSelect.addEventListener('change', toggleFields);
+    });
+    </script>
+
+
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+<!-- Header -->
+<header class="bg-indigo-600 text-white flex items-center justify-between p-4 shadow-lg">
+    <div class="text-xl font-bold">Libra-Admin</div>
+        <nav class="space-x-4 hidden md:flex">
+            <a href="/admin" class="block px-6 py-2 rounded hover:bg-indigo-500">Beranda</a>
+            <a href="/manajemen_pinjam" class="block px-6 py-2 rounded hover:bg-indigo-500">Manajemen Peminjaman</a>
+            <a href="/manajemen_anggota" class="block px-6 py-2 rounded hover:bg-indigo-500">Manajemen Anggota</a>
+            <a href="/feedback" class="block px-6 py-2 rounded hover:bg-indigo-500">Kritik & Saran</a>
+        </nav>
+    <div class="relative">
+        <img src="{{if .User.ProfilePicture}}{{.User.ProfilePicture}}{{else}}/img/default_user.png{{end}}" 
+        alt="Profil"
+        class="w-10 h-10 rounded-full cursor-pointer object-cover border-2 border-white"
+        id="profile-btn">
+    </div>
+</header>
+
+<main class="container mx-auto px-4 py-8">
+    <!-- Search & Filter -->
+  <section class="bg-white p-4 rounded-xl shadow flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-2 sm:space-y-0 mb-2">
+        <input type="text" id="search-input" placeholder="Masukan Judul Buku, Penulis atau Genre..." class="flex-grow p-2 border rounded">
+
+        <div class="relative">
+            <button id="filter-button" class="px-4 py-2 bg-indigo-600 text-white rounded flex items-center space-x-2 hover:bg-indigo-700">
+                <i class="fas fa-filter"></i>
+                <span id="current-filter-text">Semua</span>
+                <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+
+            <div id="filter-dropdown" class="hidden absolute bg-white border rounded shadow mt-2 z-50 w-40">
+                <a href="#" data-filter="all" class="block px-3 py-2 hover:bg-gray-100">Semua</a>
+                <a href="#" data-filter="jenis_buku" class="block px-3 py-2 hover:bg-gray-100">Jenis Buku</a>
+                <a href="#" data-filter="kategori" class="block px-3 py-2 hover:bg-gray-100">Kategori</a>
+                <a href="#" data-filter="genre" class="block px-3 py-2 hover:bg-gray-100">Genre</a>
+            </div>
+        </div>
+
+        <button id="search-button" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center space-x-1">
+            <i class="fas fa-search"></i><span>Cari</span>
+        </button>
+    </section>
+
+    <div id="jenis-buku-options" class="hidden bg-gray-100 p-3 rounded-lg shadow mb-4 flex space-x-3 justify-start">
+        <button data-type="Ebook" class="jenis-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Ebook
+        </button>
+        <button data-type="Buku Fisik" class="jenis-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Fisik
+        </button>
+        <button data-type="Fisik & Ebook" class="jenis-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Ebook & Fisik
+        </button>
+    </div>
+
+    <div id="kategori-buku-options" class="hidden bg-gray-100 p-3 rounded-lg shadow mb-4 flex space-x-3 justify-start">
+        <button data-category="Fiksi" class="kategori-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Fiksi
+        </button>
+        <button data-category="Non fiksi" class="kategori-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Non fiksi
+        </button>
+    </div>
+
+    <div id="genre-buku-options" class="hidden bg-gray-100 p-3 rounded-lg shadow mb-4 flex flex-wrap items-center gap-2">
+        <button data-genre="Komedi" class="genre-btn px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-purple-700 hover:bg-purple-200 transition text-sm">
+            Komedi
+        </button>
+        <button data-genre="Horor" class="genre-btn px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-purple-700 hover:bg-purple-200 transition text-sm">
+            Horor
+        </button>
+        <button data-genre="Romance" class="genre-btn px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-purple-700 hover:bg-purple-200 transition text-sm">
+            Romance
+        </button>
+        <button data-genre="Sejarah" class="genre-btn px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-purple-700 hover:bg-purple-200 transition text-sm">
+            Sejarah
+        </button>
+        <button data-genre="Misteri" class="genre-btn px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-purple-700 hover:bg-purple-200 transition text-sm">
+            Misteri
+        </button>
+        
+        <div class="flex items-center ml-2">
+            <input type="text" id="custom-genre-input" placeholder="+ Tag Genre..." 
+                   class="px-3 py-2 border border-gray-300 rounded-l-full text-sm focus:outline-none focus:border-indigo-500 w-32">
+            <button id="add-genre-btn" class="bg-indigo-600 text-white px-3 py-2 rounded-r-full hover:bg-indigo-700 text-sm">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </div>
+    </section>
+
+    <!-- Pilihan Jenis Buku -->
+    <div id="jenis-buku-options" class="hidden bg-gray-100 p-3 rounded-lg shadow mb-4 flex space-x-3 justify-start">
+        <button data-type="Ebook" class="jenis-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Ebook
+        </button>
+        <button data-type="Buku Fisik" class="jenis-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Fisik
+        </button>
+        <button data-type="Fisik & Ebook" class="jenis-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Ebook & Fisik
+        </button>
+    </div>
+
+    <!-- Pilihan Kategori Buku -->
+    <div id="kategori-buku-options" class="hidden bg-gray-100 p-3 rounded-lg shadow mb-4 flex space-x-3 justify-start">
+        <button data-category="Fiksi" class="kategori-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Fiksi
+        </button>
+        <button data-category="Non fiksi" class="kategori-btn px-4 py-2 bg-gray-200 border border-gray-400 rounded text-gray-800 hover:bg-gray-300 transition">
+            Non fiksi
+        </button>
+    </div>
+        <!-- Button Tambah Buku -->
+        <button id="toggle-add-bar-btn" class="w-full md:w-auto bg-indigo-600 text-white px-6 py-3 rounded-lg mb-6 flex items-center justify-center space-x-2 hover:bg-indigo-700 transition">
+            <i class="fas fa-plus"></i>
+            <span>Tambah Buku Baru</span>
+        </button>
+    
+        <!-- Form Tambah Buku -->
+    <div id="add-book-bar-container" class="bg-indigo-50 border border-indigo-200 rounded-xl p-6 shadow-lg">
+        <h2 class="text-2xl font-bold mb-4 flex items-center space-x-2"><i class="fas fa-book-medical"></i><span>Formulir Tambah Buku</span></h2>
+        <form id="add-book-form" enctype="multipart/form-data" action="/add-book" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    
+            <div>
+                <label for="add-title" class="font-semibold mb-1 block">Judul Buku:</label>
+                <input type="text" id="add-title" name="title" class="w-full border rounded p-2" required>
+            </div>
+            <div>
+                <label for="add-author" class="font-semibold mb-1 block">Penulis:</label>
+                <input type="text" id="add-author" name="author" class="w-full border rounded p-2" required>
+            </div>
+    
+            <div>
+                <label for="add-year" class="font-semibold mb-1 block">Tahun Terbit:</label>
+                <input type="number" id="add-year" name="year" class="w-full border rounded p-2" required min="1000" max="2100">
+            </div>
+            <div>
+                <label for="add-genre" class="font-semibold mb-1 block">Genre (pisahkan koma):</label>
+                <input type="text" id="add-genre" name="genre" class="w-full border rounded p-2" placeholder="Fantasi, Petualangan" required>
+            </div>
+    
+            <div>
+                <label for="add-category" class="font-semibold mb-1 block">Kategori:</label>
+                <select id="add-category" name="category" class="w-full border rounded p-2">
+                    <option value="Fiksi">Fiksi</option>
+                    <option value="Non Fiksi">Non Fiksi</option>
+                </select>
+            </div>
+    
+            <div>
+                <label for="add-type" class="font-semibold mb-1 block">Tipe:</label>
+                <select id="add-type" name="type" class="w-full border rounded p-2">
+                    <option value="Buku Fisik">Buku Fisik</option>
+                    <option value="Ebook">Ebook</option>
+                    <option value="Fisik & Ebook">Fisik & Ebook</option>
+                </select>
+            </div>
+    
+            <div id="location-field">
+                <label for="add-location" class="font-semibold mb-1 block">Lokasi:</label>
+                <input type="text" id="add-location" name="location" class="w-full border rounded p-2" required>
+            </div>
+    
+            <div id="stock-field">
+                <label for="add-stockMax" class="font-semibold mb-1 block">Stok Maksimal:</label>
+                <input type="number" id="add-stockMax" name="stockMax" class="w-full border rounded p-2" min="0" value="1">
+            </div>
+    
+            <div>
+                <label for="add-fineAmount" class="font-semibold mb-1 block">Denda Buku Hilang:</label>
+                <input type="number" id="add-fineAmount" name="fineAmount" class="w-full border rounded p-2" min="0" value="0">
+            </div>
+    
+            <div class="md:col-span-2">
+                <label for="add-synopsis"  class="font-semibold mb-1 block">Sinopsis:</label>
+                <textarea id="add-synopsis" name="description" rows="3" class="w-full border rounded p-2"></textarea>
+            </div>
+    
+            <div>
+                <label for="add-cover-file" class="font-semibold mb-1 block">Cover:</label>
+                <input type="file" id="add-cover-file" name="cover" accept=".jpg,.jpeg,.png,.avif">
+            </div>
+            <div>
+                <label for="add-ebook-file" class="font-semibold mb-1 block">Ebook:</label>
+                <input type="file" id="add-ebook-file" name="ebook" accept=".pdf">
+            </div>
+    
+            <div class="md:col-span-2 flex justify-end space-x-3">
+                <button type="button" id="cancel-add-btn" class="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Tambah Buku</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Daftar Buku -->
+    <h2 class="text-2xl font-bold mb-4">Daftar Buku</h2>
+<section id="book-list-container" class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
+    <p class="col-span-full text-center text-gray-500">Memuat daftar...</p>
+</section>
+
+</main>
+
+
+<!-- Overlay gelap -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
+
+<!-- Sidebar Profil -->
+<aside id="profile-sidebar" class="fixed top-0 right-0 w-80 bg-white h-full shadow-lg transform translate-x-full transition-transform duration-300 z-50 overflow-y-auto">
+    <div class="p-4 border-b flex justify-between items-center bg-indigo-600 text-white">
+        <h2 class="text-lg font-bold">Profil Pengguna</h2>
+        <button id="close-sidebar" class="hover:text-red-300">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="p-6 text-center">
+        <!-- Foto Profil -->
+<img src="{{.User.ProfilePicture}}" 
+     alt="Foto Profil"
+     class="w-28 h-28 rounded-full mx-auto mb-4 border-4 border-indigo-500 object-cover"
+     onerror="this.src='img/default_user.png'">
+
+
+        <!-- Nama Lengkap -->
+        <h3 class="text-xl font-semibold mb-1">{{.User.Fullname}}</h3>
+
+        <!-- Username -->
+        <p class="text-gray-600 text-sm mb-1">@{{.User.Username}}</p>
+
+        <!-- Email -->
+        <p class="text-gray-600 text-sm mb-3">{{.User.Email}}</p>
+
+        <!-- Role -->
+        <span class="inline-block bg-indigo-100 text-indigo-700 text-xs px-3 py-1 rounded-full mb-4">
+            {{.User.Role}}
+        </span>
+
+        <!-- Tombol Edit Foto Profil -->
+        <a href="/profile/edit-photo" class="block w-full border border-indigo-600 text-indigo-600 px-4 py-2 rounded hover:bg-indigo-50 mb-3">
+            <i class="fas fa-camera mr-2"></i>Ubah Foto Profil
+        </a>
+
+        <!-- Tombol Reset Password -->
+        <a href="/profile/reset-password-admin" class="block w-full border border-yellow-600 text-yellow-600 px-4 py-2 rounded hover:bg-yellow-50 mb-3">
+            <i class="fas fa-key mr-2"></i>Reset Password
+        </a>
+
+        <!-- Tombol Logout -->
+        <a href="/logout" 
+           class="block bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+            <i class="fas fa-sign-out-alt mr-2"></i>
+            Logout
+        </a>
+    </div>
+
+</aside>
+
+
+
+
+<script src="/js/admin.js" defer></script>
+
+<script src="/js/profil.js"></script>
+
+</body>
+
+
+</html>
