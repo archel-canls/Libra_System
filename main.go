@@ -265,7 +265,24 @@ var books = map[int]*Book{}
 
 func initDB() {
 	var err error
-	dsn := "root:@tcp(127.0.0.1:3306)/perpustakaan?parseTime=true&loc=Local&time_zone=%27%2B07%3A00%27"
+
+	// UBAH BARIS INI: Ambil dari Environment Variable, kalau kosong baru pakai localhost (untuk dev)
+	dbUser := os.Getenv("DB_USER")
+	dbPass := os.Getenv("DB_PASS")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+
+	var dsn string
+	if dbHost != "" {
+		// Format Cloud (Railway)
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&loc=Local&time_zone=%%27%%2B07%%3A00%%27",
+			dbUser, dbPass, dbHost, dbPort, dbName)
+	} else {
+		// Fallback ke Localhost
+		dsn = "root:@tcp(127.0.0.1:3306)/perpustakaan?parseTime=true&loc=Local&time_zone=%27%2B07%3A00%27"
+	}
+
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal(err)
@@ -431,7 +448,10 @@ func main() {
 	defer db.Close()
 
 	ensureUploadFolders()
-
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Default untuk lokal
+	}
 	fmt.Println("🚀 Database siap dipakai.")
 
 	var err error
