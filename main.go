@@ -453,11 +453,6 @@ func main() {
 	defer db.Close()
 
 	ensureUploadFolders()
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080" // Default untuk lokal
-	}
-	fmt.Println("🚀 Database siap dipakai.")
 
 	var err error
 	templates, err = template.ParseGlob("templates/*.html")
@@ -736,8 +731,11 @@ func main() {
 	// Manajemen Pinjam
 	http.HandleFunc("/manajemen_pinjam", manajemenPengajuanHandler)
 
-	// --- Mulai server ---
-	// --- Mulai server ---
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Default untuk lokal
+	}
+	fmt.Println("🚀 Database siap dipakai.")
 	fmt.Println("🚀 Server jalan di port " + port)
 	log.Fatal(http.ListenAndServe(":"+port, nil)) // <--- HARUS PAKAI VARIABEL port
 }
