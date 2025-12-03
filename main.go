@@ -1113,10 +1113,10 @@ func generateOTP() string {
 
 func sendEmailOTP(to, otp string) error {
 	from := "13minting0@gmail.com"
-	password := "jxseuwiqqinqnwgm"
+	password := "jxseuwiqqinqnwgm" // Pastikan ini ADALAH APP PASSWORD GMAIL!
 
 	smtpHost := "smtp.gmail.com"
-	smtpPort := "465"
+	smtpPort := "587" // UBAH PORT ke 587
 
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 
@@ -1131,16 +1131,18 @@ func sendEmailOTP(to, otp string) error {
 		ServerName:         smtpHost,
 	}
 
-	conn, err := tls.Dial("tcp", smtpHost+":"+smtpPort, tlsconfig)
+	// 1. Ganti tls.Dial menjadi smtp.Dial (Koneksi tanpa TLS)
+	c, err := smtp.Dial(smtpHost + ":" + smtpPort)
 	if err != nil {
-		return fmt.Errorf("Dial TLS error: %w", err)
+		return fmt.Errorf("Dial error (Port 587): %w", err)
 	}
 
-	c, err := smtp.NewClient(conn, smtpHost)
-	if err != nil {
-		return fmt.Errorf("NewClient error: %w", err)
+	// 2. Upgrade Koneksi menggunakan STARTTLS
+	if err = c.StartTLS(tlsconfig); err != nil {
+		return fmt.Errorf("StartTLS error: %w", err)
 	}
 
+	// Proses Autentikasi dan Pengiriman
 	if err = c.Auth(auth); err != nil {
 		return fmt.Errorf("Auth error: %w", err)
 	}
