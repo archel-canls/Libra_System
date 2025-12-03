@@ -265,7 +265,12 @@ var books = map[int]*Book{}
 
 func initDB() {
 	var err error
-
+	fmt.Println("========================================")
+	fmt.Println("DEBUGGING RAILWAY VARIABLES:")
+	fmt.Println("DB_HOST:", os.Getenv("DB_HOST"))
+	fmt.Println("DB_PORT:", os.Getenv("DB_PORT"))
+	fmt.Println("DB_USER:", os.Getenv("DB_USER"))
+	fmt.Println("========================================")
 	// UBAH BARIS INI: Ambil dari Environment Variable, kalau kosong baru pakai localhost (untuk dev)
 	dbUser := os.Getenv("DB_USER")
 	dbPass := os.Getenv("DB_PASS")
