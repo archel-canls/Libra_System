@@ -737,9 +737,9 @@ func main() {
 	http.HandleFunc("/manajemen_pinjam", manajemenPengajuanHandler)
 
 	// --- Mulai server ---
-	fmt.Println("🚀 Server jalan di http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
-
+	// --- Mulai server ---
+	fmt.Println("🚀 Server jalan di port " + port)
+	log.Fatal(http.ListenAndServe(":"+port, nil)) // <--- HARUS PAKAI VARIABEL port
 }
 
 func renderTemplate(w http.ResponseWriter, name string, data interface{}) {
