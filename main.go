@@ -1112,11 +1112,17 @@ func generateOTP() string {
 }
 
 func sendEmailOTP(to, otp string) error {
-	from := "13minting0@gmail.com"
-	password := "jxseuwiqqinqnwgm" // Pastikan ini ADALAH APP PASSWORD GMAIL!
+	// UBAH: Ambil dari Environment Variables
+	from := os.Getenv("SMTP_EMAIL")
+	password := os.Getenv("SMTP_PASS")
+
+	// Tambahkan pengecekan jika variabel belum diset
+	if from == "" || password == "" {
+		return fmt.Errorf("SMTP credentials (SMTP_EMAIL/SMTP_PASS) are not set in Railway variables")
+	}
 
 	smtpHost := "smtp.gmail.com"
-	smtpPort := "587" // UBAH PORT ke 587
+	smtpPort := "587"
 
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 
