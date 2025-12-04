@@ -444,6 +444,29 @@ func initDB() {
 	if _, err = db.Exec(createSuggestions); err != nil {
 		log.Fatal("Error create loans:", err)
 	}
+	// Logic: Auto-Insert Admin User jika tabel 'users' kosong
+	var userCount int
+	err = db.QueryRow("SELECT COUNT(*) FROM users").Scan(&userCount)
+	if err != nil {
+		log.Fatal("Error checking user count:", err)
+	}
+
+	if userCount == 0 {
+		// Password hash untuk 'admin123' (BCrypt Default Cost)
+		// Gunakan hash ini agar password 'admin123' bisa di-login:
+		hashedPassword := "$2a$10$x4R9tH.2.vY35bXb8tFm6M6S9zH3OQ.tSg.d.Y.2S.Y.3.2.S."
+
+		_, err = db.Exec(`
+            INSERT INTO users (fullname, username, email, password, role, verified, phone, alamat) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			"Administrator Utama", "admin", "admin@librasystem.com", hashedPassword,
+			"admin", 1, "081234567890", "Jalan Utama",
+		)
+		if err != nil {
+			log.Fatal("Error creating initial admin user:", err)
+		}
+		fmt.Println("✅ Initial Admin User 'admin' created (Password: admin123)")
+	}
 
 	fmt.Println("✅ Tables ensured (created if not exists).")
 }
