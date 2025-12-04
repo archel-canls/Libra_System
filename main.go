@@ -444,7 +444,15 @@ func initDB() {
 	if _, err = db.Exec(createSuggestions); err != nil {
 		log.Fatal("Error create loans:", err)
 	}
+	_, err = db.Exec("ALTER TABLE users AUTO_INCREMENT = 1")
+	if err != nil {
+		log.Println("⚠️ Peringatan saat reset Auto Increment (bisa diabaikan jika tabel kosong):", err)
+	}
 
+	//Refresh statistik tabel untuk memperbaiki meta data yang korup
+	db.Exec("ANALYZE TABLE users")
+	db.Exec("OPTIMIZE TABLE users")
+	fmt.Println("✅ Tables ensured (created if not exists).")
 	fmt.Println("✅ Tables ensured (created if not exists).")
 }
 
