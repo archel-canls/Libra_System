@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/smtp"
 	"os"
 	"strconv"
 	"strings"
@@ -17,8 +19,6 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/sendgrid/sendgrid-go"
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -1112,38 +1112,71 @@ func generateOTP() string {
 }
 
 func sendEmailOTP(to, otp string) error {
-	// 1. Ambil API Key dan Email Pengirim dari Environment Variables
-	apiKey := os.Getenv("SENDGRID_API_KEY")
-	fromEmail := os.Getenv("SMTP_EMAIL")
+	// UBAH: Ambil dari Environment Variables
+	from := os.Getenv("SMTP_EMAIL")
+	password := os.Getenv("SMTP_PASS")
 
-	if apiKey == "" || fromEmail == "" {
-		return fmt.Errorf("SendGrid API Key or Sender Email not set in Railway variables")
+	// Tambahkan pengecekan jika variabel belum diset
+	if from == "" || password == "" {
+		return fmt.Errorf("SMTP credentials (SMTP_EMAIL/SMTP_PASS) are not set in Railway variables")
 	}
 
-	// 2. Definisikan Pengirim dan Penerima
-	from := mail.NewEmail("Libra App", fromEmail)
-	toUser := mail.NewEmail("", to) // Nama user bisa dikosongkan
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
 
-	// 3. Siapkan Konten
-	subject := "Kode OTP Verifikasi"
-	plainTextContent := fmt.Sprintf("Kode OTP Anda adalah: %s", otp)
-	htmlContent := fmt.Sprintf("Kode OTP Anda adalah: <strong>%s</strong>", otp)
+	auth := smtp.PlainAuth("", from, password, smtpHost)
 
-	// 4. Buat Pesan Tunggal (Menggantikan V3Mail, SetSubject, dan AddPersonalizations)
-	message := mail.NewSingleEmail(from, subject, toUser, plainTextContent, htmlContent)
+	msg := "From: " + from + "\r\n" +
+		"To: " + to + "\r\n" +
+		"Subject: Kode OTP Verifikasi\r\n\r\n" +
+		"Kode OTP Anda adalah: " + otp
 
-	// 5. Kirim Email melalui HTTP API
-	client := sendgrid.NewSendClient(apiKey)
-	response, err := client.Send(message) // Menggunakan fungsi Send() yang sederhana
+	// TLS config
+	tlsconfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         smtpHost,
+	}
 
+	// 1. Ganti tls.Dial menjadi smtp.Dial (Koneksi tanpa TLS)
+	c, err := smtp.Dial(smtpHost + ":" + smtpPort)
 	if err != nil {
-		return fmt.Errorf("SendGrid HTTP Request Error: %w", err)
+		return fmt.Errorf("Dial error (Port 587): %w", err)
 	}
 
-	// 6. Cek Status Code
-	if response.StatusCode >= 300 {
-		return fmt.Errorf("SendGrid API Failed with status %d: %s", response.StatusCode, response.Body)
+	// 2. Upgrade Koneksi menggunakan STARTTLS
+	if err = c.StartTLS(tlsconfig); err != nil {
+		return fmt.Errorf("StartTLS error: %w", err)
 	}
+
+	// Proses Autentikasi dan Pengiriman
+	if err = c.Auth(auth); err != nil {
+		return fmt.Errorf("Auth error: %w", err)
+	}
+
+	if err = c.Mail(from); err != nil {
+		return fmt.Errorf("Mail error: %w", err)
+	}
+
+	if err = c.Rcpt(to); err != nil {
+		return fmt.Errorf("Rcpt error: %w", err)
+	}
+
+	w, err := c.Data()
+	if err != nil {
+		return fmt.Errorf("Data error: %w", err)
+	}
+
+	_, err = w.Write([]byte(msg))
+	if err != nil {
+		return fmt.Errorf("Write error: %w", err)
+	}
+
+	err = w.Close()
+	if err != nil {
+		return fmt.Errorf("Close error: %w", err)
+	}
+
+	c.Quit()
 
 	return nil
 }
