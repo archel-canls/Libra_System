@@ -453,7 +453,6 @@ func initDB() {
 	db.Exec("ANALYZE TABLE users")
 	db.Exec("OPTIMIZE TABLE users")
 	fmt.Println("✅ Tables ensured (created if not exists).")
-	fmt.Println("✅ Tables ensured (created if not exists).")
 }
 
 func main() {
